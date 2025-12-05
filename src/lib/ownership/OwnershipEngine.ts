@@ -38,26 +38,44 @@ export class OwnershipEngine {
     return status;
   }
 
+  public getMatchingRule(filePath: string): string | undefined {
+    // We reverse the matchers so that the first matching rule encountered
+    // will be the last from CODEOWNERS, respecting precedence correctly
+    const matchers = [...this.matchers].reverse();
+
+    for (const matcher of matchers) {
+      if (matcher.match(filePath)) {
+        return matcher.rule;
+      }
+    }
+
+    return undefined;
+  }
 
   public static FromCodeownersFile(filePath: string) {
     try {
-      const lines = fs.readFileSync(filePath).toString().replace(/\r/g, '').split('\n');
-
-      const owned: FileOwnershipMatcher[] = [];
-
-      for (const line of lines) {
-        if (!line || line.startsWith('#')) {
-          continue;
-        }
-
-        owned.push(createMatcherCodeownersRule(line));
-      }
-
-      return new OwnershipEngine(owned);
+      const content = fs.readFileSync(filePath).toString();
+      return OwnershipEngine.FromCodeownersContent(content);
     } catch (error) {
-      log.error(`failed to load codeowners file from ${filePath}`, error);
+      log.error(`failed to load codeowners file from ${filePath}`, error as Error);
       throw error;
     }
+  }
+
+  public static FromCodeownersContent(content: string) {
+    const lines = content.replace(/\r/g, '').split('\n');
+
+    const owned: FileOwnershipMatcher[] = [];
+
+    for (const line of lines) {
+      if (!line || line.startsWith('#')) {
+        continue;
+      }
+
+      owned.push(createMatcherCodeownersRule(line));
+    }
+
+    return new OwnershipEngine(owned);
   }
 }
 

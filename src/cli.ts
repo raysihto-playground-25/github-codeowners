@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import * as path from 'path';
 
-import commander from 'commander';
+import { Command } from 'commander';
 
 import { audit } from './commands/audit';
 import { who } from './commands/who';
@@ -13,9 +13,11 @@ import { validate } from './commands/validate';
 
 const { version } = require('../package.json');
 
-commander.version(version);
+const program = new Command();
 
-commander.command('audit')
+program.version(version);
+
+program.command('audit')
   .description('list the owners for all files')
   .option('-d, --dir <dirPath>', 'path to VCS directory', process.cwd())
   .option('-c, --codeowners <filePath>', 'path to codeowners file (default: "<dir>/.github/CODEOWNERS")')
@@ -24,7 +26,7 @@ commander.command('audit')
   .option('-g, --only-git', 'consider only files tracked by git', false)
   .option('-s, --stats', 'write output stats', false)
   .option('-r, --root <rootPath>', 'the root path to filter files by', '')
-  .action(async (options) => {
+  .action(async (options: any) => {
     try {
       if (!options.codeowners) {
         options.codeowners = path.resolve(options.dir, '.github/CODEOWNERS');
@@ -36,17 +38,17 @@ commander.command('audit')
 
       await audit(options);
     } catch (error) {
-      log.error('failed to run audit command', error);
+      log.error('failed to run audit command', error as Error);
       process.exit(1);
     }
   });
 
-commander.command('validate')
-  .description('Validates a CODOWNER file and files in dir')
+program.command('validate')
+  .description('Validates a CODEOWNERS file and files in dir')
   .option('-d, --dir <dirPath>', 'path to VCS directory', process.cwd())
   .option('-c, --codeowners <filePath>', 'path to codeowners file (default: "<dir>/.github/CODEOWNERS")')
   .option('-r, --root <rootPath>', 'the root path to filter files by', '')
-  .action(async (options) => {
+  .action(async (options: any) => {
     try {
       if (!options.codeowners) {
         options.codeowners = path.resolve(options.dir, '.github/CODEOWNERS');
@@ -58,18 +60,18 @@ commander.command('validate')
 
       await validate(options);
     } catch (error) {
-      log.error('failed to run validate command', error);
+      log.error('failed to run validate command', error as Error);
       process.exit(1);
     }
   });
 
 
-commander.command('who <files...>')
+program.command('who <files...>')
   .description('lists owners of a specific file or files')
   .option('-d, --dir <dirPath>', 'path to VCS directory', process.cwd())
   .option('-c, --codeowners <filePath>', 'path to codeowners file (default: "<dir>/.github/CODEOWNERS")')
   .option('-o, --output <outputFormat>', `how to output format eg: ${Object.values(OUTPUT_FORMAT).join(', ')}`, OUTPUT_FORMAT.SIMPLE)
-  .action(async (files, options) => {
+  .action(async (files: any, options: any) => {
     try {
       if (files.length < 1) {
         throw new Error('a file must be defined');
@@ -83,18 +85,18 @@ commander.command('who <files...>')
 
       await who(options);
     } catch (error) {
-      log.error('failed to run who command', error);
+      log.error('failed to run who command', error as Error);
       process.exit(1);
     }
   });
 
-commander.command('git [shaA] [shaB]')
+program.command('git [shaA] [shaB]')
   .description('lists owners of files changed between commits, a commit against head or staged against head')
   .option('-d, --dir <dirPath>', 'path to VCS directory', process.cwd())
   .option('-c, --codeowners <filePath>', 'path to codeowners file (default: "<dir>/.github/CODEOWNERS")')
   .option('-o, --output <outputFormat>', `how to output format eg: ${Object.values(OUTPUT_FORMAT).join(', ')}`, OUTPUT_FORMAT.SIMPLE)
   .option('-s, --stats', 'output stats, note: line counts are not available for this command', false)
-  .action(async (shaA, shaB, options) => {
+  .action(async (shaA: any, shaB: any, options: any) => {
     try {
       if (!options.codeowners) {
         options.codeowners = path.resolve(options.dir, '.github/CODEOWNERS');
@@ -105,14 +107,14 @@ commander.command('git [shaA] [shaB]')
 
       await git(options);
     } catch (error) {
-      log.error('failed to run git command', error);
+      log.error('failed to run git command', error as Error);
       process.exit(1);
     }
   });
 
 
 if (!process.argv.slice(2).length) {
-  commander.outputHelp();
+  program.outputHelp();
 }
 
-commander.parse(process.argv);
+program.parse(process.argv);
