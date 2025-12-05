@@ -44,7 +44,7 @@ program.command('audit')
   });
 
 program.command('validate')
-  .description('Validates a CODOWNER file and files in dir')
+  .description('Validates a CODEOWNERS file and files in dir')
   .option('-d, --dir <dirPath>', 'path to VCS directory', process.cwd())
   .option('-c, --codeowners <filePath>', 'path to codeowners file (default: "<dir>/.github/CODEOWNERS")')
   .option('-r, --root <rootPath>', 'the root path to filter files by', '')

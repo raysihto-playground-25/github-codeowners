@@ -1,8 +1,154 @@
 # github-codeowners
-[![Maintainability](https://api.codeclimate.com/v1/badges/005e2a8038aa060010dd/maintainability)](https://codeclimate.com/github/jjmschofield/github-codeowners/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/005e2a8038aa060010dd/test_coverage)](https://codeclimate.com/github/jjmschofield/github-codeowners/test_coverage)
-[![CircleCI](https://circleci.com/gh/jjmschofield/github-codeowners/tree/master.svg?style=shield)](https://circleci.com/gh/jjmschofield/github-codeowners/tree/master)
-[![Known Vulnerabilities](https://snyk.io/test/github/jjmschofield/github-codeowners/badge.svg?targetFile=package.json)](https://snyk.io/test/github/jjmschofield/github-codeowners?targetFile=package.json)
+
+A specification-faithful parser and matcher for GitHub CODEOWNERS files. Use it as a library in your TypeScript/JavaScript projects or as a CLI tool.
+
+## Features
+
+* 🎯 **Specification-faithful** - Follows GitHub's CODEOWNERS specification precisely
+* 📚 **Library-first design** - Clean public API for programmatic use
+* 🔧 **CLI tool** - Full-featured command-line interface
+* ✅ **Well-tested** - Comprehensive test coverage including edge cases
+* 📦 **Modern** - TypeScript 5, Node.js 18+, latest dependencies
+* 🔒 **Type-safe** - Full TypeScript support with generated type declarations
+
+## Installation
+
+### As a library
+```bash
+npm install @snyk/github-codeowners
+```
+
+### As a CLI tool
+```bash
+npm install -g @snyk/github-codeowners
+```
+
+## Library Usage
+
+The library provides a clean, documented API for parsing and matching CODEOWNERS files.
+
+### Basic Example
+
+```typescript
+import { parseCodeowners, matchFile } from '@snyk/github-codeowners';
+
+// Parse a CODEOWNERS file
+const codeowners = parseCodeowners('.github/CODEOWNERS');
+
+// Find owners for a specific file
+const owners = matchFile(codeowners, 'src/index.ts');
+console.log(owners); // ['@backend-team']
+```
+
+### API Reference
+
+#### `parseCodeowners(filePath: string): ParsedCodeowners`
+
+Parse a CODEOWNERS file from disk.
+
+```typescript
+const codeowners = parseCodeowners('.github/CODEOWNERS');
+```
+
+#### `parseCodeownersContent(content: string): ParsedCodeowners`
+
+Parse CODEOWNERS content from a string.
+
+```typescript
+const content = `
+* @global-owner
+/docs/ @docs-team
+`;
+const codeowners = parseCodeownersContent(content);
+```
+
+#### `matchFile(codeowners: ParsedCodeowners, filePath: string): string[]`
+
+Get the owners for a specific file. Returns an array of owner identifiers (e.g., `@username`, `@org/team`, or email addresses).
+
+```typescript
+const owners = matchFile(codeowners, 'src/index.ts');
+// Returns: ['@backend-team']
+```
+
+#### `matchFileDetailed(codeowners: ParsedCodeowners, filePath: string): OwnerMatch`
+
+Get detailed information about the ownership match.
+
+```typescript
+const match = matchFileDetailed(codeowners, 'src/index.ts');
+console.log(match.owners);  // ['@backend-team']
+console.log(match.rule);    // 'src/** @backend-team'
+console.log(match.path);    // 'src/index.ts'
+```
+
+#### `matchFiles(codeowners: ParsedCodeowners, filePaths: string[]): Map<string, string[]>`
+
+Match multiple files at once.
+
+```typescript
+const files = ['src/index.ts', 'docs/README.md', 'tests/test.ts'];
+const ownershipMap = matchFiles(codeowners, files);
+
+ownershipMap.forEach((owners, filePath) => {
+  console.log(`${filePath}: ${owners.join(', ')}`);
+});
+```
+
+#### `getRules(codeowners: ParsedCodeowners): Array<{ rule: string; matched: number }>`
+
+Get all ownership rules and their match counts.
+
+```typescript
+const rules = getRules(codeowners);
+rules.forEach(rule => {
+  console.log(`${rule.rule} matched ${rule.matched} files`);
+});
+```
+
+### Advanced Example
+
+```typescript
+import { 
+  parseCodeowners, 
+  matchFile, 
+  matchFileDetailed,
+  getRules 
+} from '@snyk/github-codeowners';
+
+// Parse CODEOWNERS
+const codeowners = parseCodeowners('.github/CODEOWNERS');
+
+// Check ownership for multiple files
+const filesToCheck = [
+  'src/api/users.ts',
+  'src/api/products.ts',
+  'docs/api.md',
+  'README.md'
+];
+
+filesToCheck.forEach(file => {
+  const match = matchFileDetailed(codeowners, file);
+  
+  if (match.owners.length > 0) {
+    console.log(`✓ ${file} → ${match.owners.join(', ')}`);
+    console.log(`  Rule: ${match.rule}`);
+  } else {
+    console.log(`✗ ${file} → UNOWNED`);
+  }
+});
+
+// Get statistics
+const rules = getRules(codeowners);
+console.log(`\nTotal rules: ${rules.length}`);
+rules.forEach(rule => {
+  if (rule.matched > 0) {
+    console.log(`  ${rule.rule} (matched ${rule.matched} times)`);
+  }
+});
+```
+
+## CLI Usage
 
 A CLI tool for working with GitHub CODEOWNERS.
 
@@ -14,17 +160,8 @@ Things it does:
 * Outputs in a bunch of script friendly handy formats for integrations (CSV and JSONL)
 * Validates that your CODEOWNERS file is valid
 
-## Installation
-Install via npm globally then run
-
-```shell script
-$ npm i -g github-codeowners
-$ github-codeowners --help 
-Usage: github-codeowners [options] [command]
-```
-
-## Commands
-### Audit
+### Commands
+#### Audit
 Compares every file in your current (or specified) directory against your CODEOWNERS rules and outputs the result of who owns each file.
 ```shell script
 $ cd <your awesome project> 
@@ -184,9 +321,57 @@ Check `github-codeowners <command> --help` for support for a given command, howe
 * `jsonl` - line separated json - useful for streaming data to another command
 * `csv` - csv delimited fields - useful to import into a spreadsheet tool of your choice
 
+## Specification Compliance
+
+This library implements GitHub's CODEOWNERS specification as documented in the [official GitHub documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
+
+### Implemented Features
+
+✅ **Pattern Matching**
+- Gitignore-style patterns (wildcards `*`, double-asterisk `**`, question mark `?`)
+- Leading slash anchors patterns to repository root
+- Trailing slash matches directories
+- Last matching rule wins (precedence)
+
+✅ **Owner Formats**
+- GitHub usernames (`@username`)
+- GitHub teams (`@org/team-name`)
+- Email addresses (`user@example.com`)
+
+✅ **Comment Support**
+- Lines starting with `#` are treated as comments
+- Blank lines are ignored
+
+✅ **Special Pattern Handling**
+- `/*` matches only root-level files (not nested directories)
+- `/**` matches all files at any depth
+- Patterns without leading `/` match anywhere in the tree
+
+### Known Limitations
+
+⚠️ **Module Format**
+- This package uses CommonJS and is compatible with Node.js 18+
+- Dependencies `ignore` v5.x and `p-map` v4.x are used (newer versions are ESM-only)
+
+⚠️ **Pattern Edge Cases**
+- The `/*` pattern behavior is implemented via regex modification of the underlying `ignore` library
+- While tested against known patterns, there may be edge cases where behavior differs from GitHub's implementation
+- Escape sequences in patterns (e.g., `\ ` for spaces) follow gitignore conventions
+
+### Differences from GitHub
+
+This library aims to be specification-faithful, but some differences may exist:
+
+1. **CODEOWNERS file location**: This library accepts any file path, while GitHub looks in specific locations (`.github/CODEOWNERS`, `docs/CODEOWNERS`, or root `CODEOWNERS`)
+2. **Validation strictness**: The library validates owner format strictly and throws on invalid formats, which may differ slightly from GitHub's validation
+3. **Performance**: This library processes files sequentially; GitHub's implementation details are proprietary
+
+## Requirements
+
+- Node.js >= 18.0.0
+- TypeScript 5.x (for development)
+
 ## Limits and Things to Improve
-* It requires node
-* It is not optimized
 * The output interface might change
 * Command syntax might change
 
